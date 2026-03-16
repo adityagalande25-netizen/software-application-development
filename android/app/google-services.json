@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "893152883588",
+    "project_id": "accidentdetection-cba15",
+    "storage_bucket": "accidentdetection-cba15.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893152883588:android:df9f60c323a0aaa20fa3d1",
+        "android_client_info": {
+          "package_name": "com.example.accident_detection_system"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "893152883588-980iasijsciic7qf6fhhsqouhlnoi5nq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.accident_detection_system",
+            "certificate_hash": "9a139a1d2e42acedebbd926fed93fab953676d94"
+          }
+        },
+        {
+          "client_id": "893152883588-qr99hh5j9i7an9kr7rhvlsup74nihpqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG36pHDrqt9lhSSP8UqVXfbfSOR9nJrQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "893152883588-qr99hh5j9i7an9kr7rhvlsup74nihpqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "893152883588-2h1uc9u6587l3n3g1e4sgkko8fgl2vdi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.accidentDetectionSystem"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
