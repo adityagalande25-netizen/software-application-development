@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../../utils/constants.dart';
+import '../../widgets/app_menu_drawer.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -69,7 +71,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = _auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
+        ],
+      ),
+      endDrawer: const AppMenuDrawer(currentRoute: AppRoutes.settings),
       body: SingleChildScrollView(
         child: Column(
           children: [

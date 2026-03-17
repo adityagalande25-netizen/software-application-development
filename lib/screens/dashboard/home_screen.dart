@@ -6,10 +6,9 @@ import '../../services/location_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/database_service.dart';
 import '../../models/accident_report_model.dart';
-import '../contacts/emergency_contacts_screen.dart';
-import '../history/accident_history_screen.dart';
-import '../settings/settings_screen.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../utils/constants.dart';
+import '../../widgets/app_menu_drawer.dart';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
 
@@ -20,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   final _authService = AuthService();
   final _sensorService = SensorMonitoringService(impactThreshold: 25.0);
   final _locationService = LocationService();
@@ -30,12 +29,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _accidentDetected = false;
   int _countdownSeconds = 10;
   Timer? _countdownTimer;
+  late final AnimationController _sosPulseController;
   double _currentImpactForce = 0;
   Map<String, dynamic> _currentSensorData = {};
 
   @override
   void initState() {
     super.initState();
+    _sosPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
     WidgetsBinding.instance.addObserver(this);
     _initializeMonitoring();
   }
@@ -261,10 +265,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  void _navigateTo(String routeName) {
+    Navigator.of(context).pushNamed(routeName);
+  }
+
   @override
   void dispose() {
     _stopMonitoring();
     _countdownTimer?.cancel();
+    _sosPulseController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -275,14 +284,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Accident Detection System'),
+        title: const Text('Accident Detection'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
           ),
         ],
       ),
+      endDrawer: const AppMenuDrawer(currentRoute: AppRoutes.home),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -363,22 +376,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               // SOS Button
               SizedBox(
                 height: 100,
-                child: ElevatedButton(
-                  onPressed: _manualSOS,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.emergency, size: 40, color: Colors.white),
-                      SizedBox(height: 8),
-                      Text(
-                        'MANUAL SOS',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                child: AnimatedBuilder(
+                  animation: _sosPulseController,
+                  builder: (context, child) {
+                    final scale = 0.98 + (_sosPulseController.value * 0.04);
+                    return Transform.scale(scale: scale, child: child);
+                  },
+                  child: ElevatedButton(
+                    onPressed: _manualSOS,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.emergency, size: 40, color: Colors.white),
+                        SizedBox(height: 8),
+                        Text(
+                          'MANUAL SOS',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -416,6 +436,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 'Quick Actions',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 4),
+              const Text(
+                'Tap any action to open its page',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 2,
@@ -425,33 +450,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _quickActionCard(
+                    index: 0,
                     icon: Icons.contacts,
                     title: 'Emergency Contacts',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const EmergencyContactsScreen()),
-                    ),
+                    onTap: () => _navigateTo(AppRoutes.contacts),
                   ),
                   _quickActionCard(
+                    index: 1,
                     icon: Icons.history,
                     title: 'Accident History',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AccidentHistoryScreen()),
-                    ),
+                    onTap: () => _navigateTo(AppRoutes.history),
                   ),
                   _quickActionCard(
+                    index: 2,
                     icon: Icons.settings,
                     title: 'Settings',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    ),
+                    onTap: () => _navigateTo(AppRoutes.settings),
                   ),
                   _quickActionCard(
+                    index: 3,
                     icon: Icons.info,
                     title: 'Help & Info',
-                    onTap: () => _showHelpDialog(),
+                    onTap: () => _navigateTo(AppRoutes.help),
                   ),
                 ],
               ),
@@ -473,69 +493,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _quickActionCard({
+    required int index,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 280 + (index * 120)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value.clamp(0, 1),
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 20),
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: onTap,
+        child: Card(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 40, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('About This App'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Accident Detection System',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'This app uses your phone\'s sensors to detect accidents automatically. When a sudden impact is detected, you\'ll have 10 seconds to cancel the alert before emergency contacts are notified.',
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Features:\n'
-                '• Automatic accident detection\n'
-                '• Real-time GPS location sharing\n'
-                '• Emergency contact alerts\n'
-                '• Accident history tracking\n'
-                '• Manual SOS button',
-                style: TextStyle(fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _AccidentConfirmationDialog extends StatefulWidget {

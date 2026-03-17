@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/database_service.dart';
 import '../../models/emergency_contact_model.dart';
+import '../../utils/constants.dart';
+import '../../widgets/app_menu_drawer.dart';
 import 'package:uuid/uuid.dart';
 
 class EmergencyContactsScreen extends StatefulWidget {
@@ -131,7 +133,18 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     final userId = _auth.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Emergency Contacts')),
+      appBar: AppBar(
+        title: const Text('Emergency Contacts'),
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
+        ],
+      ),
+      endDrawer: const AppMenuDrawer(currentRoute: AppRoutes.contacts),
       body: userId == null
           ? const Center(child: Text('User not authenticated'))
           : FutureBuilder<List<EmergencyContact>>(

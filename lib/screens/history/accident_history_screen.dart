@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../services/database_service.dart';
 import '../../models/accident_report_model.dart';
+import '../../utils/constants.dart';
+import '../../widgets/app_menu_drawer.dart';
 
 class AccidentHistoryScreen extends StatefulWidget {
   const AccidentHistoryScreen({super.key});
@@ -20,7 +22,18 @@ class _AccidentHistoryScreenState extends State<AccidentHistoryScreen> {
     final userId = _auth.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Accident History')),
+      appBar: AppBar(
+        title: const Text('Accident History'),
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
+        ],
+      ),
+      endDrawer: const AppMenuDrawer(currentRoute: AppRoutes.history),
       body: userId == null
           ? const Center(child: Text('User not authenticated'))
           : FutureBuilder<List<AccidentReport>>(

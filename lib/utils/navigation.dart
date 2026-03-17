@@ -5,38 +5,65 @@ import '../screens/dashboard/home_screen.dart';
 import '../screens/contacts/emergency_contacts_screen.dart';
 import '../screens/history/accident_history_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/help/help_info_screen.dart';
 import 'constants.dart';
 
 /// App route generator
 class AppRouter {
+  static Route<dynamic> _buildAnimatedRoute(Widget child, {RouteSettings? settings}) {
+    return PageRouteBuilder(
+      settings: settings,
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 240),
+      pageBuilder: (context, animation, secondaryAnimation) => child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0.08, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+
+        final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
+
+        return FadeTransition(
+          opacity: fade,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+    );
+  }
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return _buildAnimatedRoute(const LoginScreen(), settings: settings);
 
       case AppRoutes.signup:
-        return MaterialPageRoute(builder: (_) => const SignupScreen());
+        return _buildAnimatedRoute(const SignupScreen(), settings: settings);
 
       case AppRoutes.home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        return _buildAnimatedRoute(const HomeScreen(), settings: settings);
 
       case AppRoutes.contacts:
-        return MaterialPageRoute(builder: (_) => const EmergencyContactsScreen());
+        return _buildAnimatedRoute(const EmergencyContactsScreen(), settings: settings);
 
       case AppRoutes.history:
-        return MaterialPageRoute(builder: (_) => const AccidentHistoryScreen());
+        return _buildAnimatedRoute(const AccidentHistoryScreen(), settings: settings);
 
       case AppRoutes.settings:
-        return MaterialPageRoute(builder: (_) => const SettingsScreen());
+        return _buildAnimatedRoute(const SettingsScreen(), settings: settings);
+
+      case AppRoutes.help:
+        return _buildAnimatedRoute(const HelpInfoScreen(), settings: settings);
 
       default:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
+        return _buildAnimatedRoute(
+          Scaffold(
             appBar: AppBar(title: const Text('Error')),
             body: Center(
               child: Text('No route defined for ${settings.name}'),
             ),
           ),
+          settings: settings,
         );
     }
   }
