@@ -76,6 +76,8 @@
 	<!-- Motion/Sensor Permissions -->
 	<key>NSMotionUsageDescription</key>
 	<string>This app uses motion sensors to detect accidents</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access so you can set a profile picture</string>
 	<!-- Notification Permissions -->
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>

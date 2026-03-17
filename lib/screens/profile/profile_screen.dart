@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/database_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/app_menu_drawer.dart';
@@ -22,14 +26,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _addressController = TextEditingController();
   final _medicalNotesController = TextEditingController();
   final _avatarUrlController = TextEditingController();
+  final _imagePicker = ImagePicker();
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+  }
+
+  Future<void> _pickAndUploadProfilePhoto() async {
+    final user = _auth.currentUser;
+    if (user == null || _isUploadingImage) return;
+
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 82,
+        maxWidth: 1024,
+      );
+
+      if (picked == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_profiles/${user.uid}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+      await storageRef.putFile(File(picked.path));
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      _avatarUrlController.text = downloadUrl;
+
+      await _db.updateUserProfile(user.uid, {
+        'profileImageUrl': downloadUrl,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile photo uploaded successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Photo upload failed: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -139,12 +191,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     avatarUrl: _avatarUrlController.text,
                   ),
                   const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: _isUploadingImage ? null : _pickAndUploadProfilePhoto,
+                    icon: _isUploadingImage
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.photo_library_outlined),
+                    label: Text(_isUploadingImage ? 'Uploading Photo...' : 'Upload From Gallery'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      backgroundColor: Colors.deepOrange,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   TextFormField(
                     controller: _avatarUrlController,
                     decoration: const InputDecoration(
                       labelText: 'Profile Image URL',
                       prefixIcon: Icon(Icons.image_outlined),
-                      hintText: 'https://example.com/photo.jpg',
+                      hintText: 'Auto-filled after upload (or paste custom URL)',
                     ),
                   ),
                   const SizedBox(height: 12),
