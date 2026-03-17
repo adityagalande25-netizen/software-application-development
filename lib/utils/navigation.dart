@@ -6,6 +6,7 @@ import '../screens/contacts/emergency_contacts_screen.dart';
 import '../screens/history/accident_history_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/help/help_info_screen.dart';
+import '../screens/profile/profile_screen.dart';
 import 'constants.dart';
 
 /// App route generator
@@ -53,6 +54,9 @@ class AppRouter {
 
       case AppRoutes.home:
         return _buildAnimatedRoute(const HomeScreen(), settings: settings);
+
+      case AppRoutes.profile:
+        return _buildAnimatedRoute(const ProfileScreen(), settings: settings);
 
       case AppRoutes.contacts:
         return _buildAnimatedRoute(const EmergencyContactsScreen(), settings: settings);

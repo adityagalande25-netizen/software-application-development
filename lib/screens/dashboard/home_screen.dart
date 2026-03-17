@@ -6,7 +6,6 @@ import '../../services/location_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/database_service.dart';
 import '../../models/accident_report_model.dart';
-import '../../screens/auth/login_screen.dart';
 import '../../utils/constants.dart';
 import '../../widgets/app_menu_drawer.dart';
 import 'dart:async';
@@ -29,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
   bool _accidentDetected = false;
   int _countdownSeconds = 10;
   Timer? _countdownTimer;
+  late final AnimationController _ambientController;
   late final AnimationController _sosPulseController;
   double _currentImpactForce = 0;
   Map<String, dynamic> _currentSensorData = {};
@@ -36,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
   @override
   void initState() {
     super.initState();
+    _ambientController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..repeat(reverse: true);
     _sosPulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -242,37 +246,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
     );
   }
 
-  Future<void> _logout() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout?'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              _stopMonitoring();
-              _authService.logout();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _navigateTo(String routeName) {
-    Navigator.of(context).pushNamed(routeName);
-  }
-
   @override
   void dispose() {
     _stopMonitoring();
     _countdownTimer?.cancel();
+    _ambientController.dispose();
     _sosPulseController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -303,24 +281,58 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Welcome Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome, ${user?.displayName ?? 'User'}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              AnimatedBuilder(
+                animation: _ambientController,
+                builder: (context, child) {
+                  final value = _ambientController.value;
+                  return Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color.lerp(Colors.red.shade800, Colors.red.shade600, value)!,
+                          Color.lerp(Colors.deepOrange.shade600, Colors.red.shade900, value)!,
+                        ],
+                        begin: Alignment(-1 + (value * 0.5), -1),
+                        end: Alignment(1, 1 - (value * 0.4)),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Your device is continuously monitoring for accidents',
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      children: [
+                        RotationTransition(
+                          turns: Tween<double>(begin: -0.02, end: 0.02).animate(_ambientController),
+                          child: const CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.health_and_safety_outlined, color: Colors.red, size: 26),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Welcome, ${user?.displayName ?? 'User'}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Monitoring your safety in real time',
+                                style: TextStyle(color: Colors.white70, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
@@ -431,49 +443,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
                 ),
               const SizedBox(height: 24),
 
-              // Quick Actions
-              const Text(
-                'Quick Actions',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Tap any action to open its page',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _quickActionCard(
-                    index: 0,
-                    icon: Icons.contacts,
-                    title: 'Emergency Contacts',
-                    onTap: () => _navigateTo(AppRoutes.contacts),
-                  ),
-                  _quickActionCard(
-                    index: 1,
-                    icon: Icons.history,
-                    title: 'Accident History',
-                    onTap: () => _navigateTo(AppRoutes.history),
-                  ),
-                  _quickActionCard(
-                    index: 2,
-                    icon: Icons.settings,
-                    title: 'Settings',
-                    onTap: () => _navigateTo(AppRoutes.settings),
-                  ),
-                  _quickActionCard(
-                    index: 3,
-                    icon: Icons.info,
-                    title: 'Help & Info',
-                    onTap: () => _navigateTo(AppRoutes.help),
-                  ),
-                ],
+              AnimatedBuilder(
+                animation: _ambientController,
+                builder: (context, child) {
+                  final bob = ((_ambientController.value - 0.5).abs()) * 8;
+                  return Transform.translate(
+                    offset: Offset(0, bob),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.tips_and_updates_outlined),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Use the menu to open Profile, Contacts, History, Settings, and Help.',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -489,45 +485,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
         Text(label, style: const TextStyle(color: Colors.grey)),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  Widget _quickActionCard({
-    required int index,
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 220 + (index * 90)),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value.clamp(0, 1),
-          child: Transform.translate(
-            offset: Offset(0, (1 - value) * 14),
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTap: onTap,
-        child: Card(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

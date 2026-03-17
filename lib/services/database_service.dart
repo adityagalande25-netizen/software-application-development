@@ -6,6 +6,26 @@ import '../models/accident_report_model.dart';
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // ========== User Profile ==========
+
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    } catch (e) {
+      throw 'Error getting user profile: $e';
+    }
+  }
+
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('users').doc(userId).set(data, SetOptions(merge: true));
+    } catch (e) {
+      throw 'Error updating user profile: $e';
+    }
+  }
+
   // ========== Emergency Contacts ==========
 
   // Add emergency contact

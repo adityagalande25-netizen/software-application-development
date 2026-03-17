@@ -56,6 +56,12 @@ class AppMenuDrawer extends StatelessWidget {
               onTap: () => _navigateTo(context, AppRoutes.home),
             ),
             ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Profile'),
+              selected: currentRoute == AppRoutes.profile,
+              onTap: () => _navigateTo(context, AppRoutes.profile),
+            ),
+            ListTile(
               leading: const Icon(Icons.contacts),
               title: const Text('Emergency Contacts'),
               selected: currentRoute == AppRoutes.contacts,
