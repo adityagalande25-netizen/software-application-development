@@ -13,20 +13,31 @@ class AppRouter {
   static Route<dynamic> _buildAnimatedRoute(Widget child, {RouteSettings? settings}) {
     return PageRouteBuilder(
       settings: settings,
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 240),
+      transitionDuration: const Duration(milliseconds: 240),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (context, animation, secondaryAnimation) => child,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final slide = Tween<Offset>(
-          begin: const Offset(0.08, 0),
+          begin: const Offset(0.04, 0),
           end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+
+        final scale = Tween<double>(
+          begin: 0.97,
+          end: 1.0,
         ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
 
         final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
         return FadeTransition(
           opacity: fade,
-          child: SlideTransition(position: slide, child: child),
+          child: SlideTransition(
+            position: slide,
+            child: ScaleTransition(
+              scale: scale,
+              child: child,
+            ),
+          ),
         );
       },
     );

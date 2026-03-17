@@ -1,10 +1,4 @@
 import 'package:flutter/material.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/contacts/emergency_contacts_screen.dart';
-import '../screens/dashboard/home_screen.dart';
-import '../screens/help/help_info_screen.dart';
-import '../screens/history/accident_history_screen.dart';
-import '../screens/settings/settings_screen.dart';
 import '../services/auth_service.dart';
 import '../utils/constants.dart';
 
@@ -23,48 +17,14 @@ class AppMenuDrawer extends StatelessWidget {
     }
 
     Navigator.pop(context);
-
-    Widget screen;
-    switch (route) {
-      case AppRoutes.home:
-        screen = const HomeScreen();
-        break;
-      case AppRoutes.contacts:
-        screen = const EmergencyContactsScreen();
-        break;
-      case AppRoutes.history:
-        screen = const AccidentHistoryScreen();
-        break;
-      case AppRoutes.settings:
-        screen = const SettingsScreen();
-        break;
-      case AppRoutes.help:
-        screen = const HelpInfoScreen();
-        break;
-      default:
-        screen = const HomeScreen();
-        break;
-    }
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 280),
-        reverseTransitionDuration: const Duration(milliseconds: 220),
-        pageBuilder: (_, animation, __) {
-          return FadeTransition(opacity: animation, child: screen);
-        },
-      ),
-    );
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   Future<void> _logout(BuildContext context) async {
     Navigator.pop(context);
     await AuthService().logout();
     if (!context.mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   @override

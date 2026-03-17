@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
                 child: AnimatedBuilder(
                   animation: _sosPulseController,
                   builder: (context, child) {
-                    final scale = 0.98 + (_sosPulseController.value * 0.04);
+                    final scale = 0.96 + (_sosPulseController.value * 0.05);
                     return Transform.scale(scale: scale, child: child);
                   },
                   child: ElevatedButton(
@@ -500,13 +500,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
   }) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 280 + (index * 120)),
-      curve: Curves.easeOutCubic,
+      duration: Duration(milliseconds: 220 + (index * 90)),
+      curve: Curves.easeOutBack,
       builder: (context, value, child) {
         return Opacity(
           opacity: value.clamp(0, 1),
           child: Transform.translate(
-            offset: Offset(0, (1 - value) * 20),
+            offset: Offset(0, (1 - value) * 14),
             child: child,
           ),
         );
