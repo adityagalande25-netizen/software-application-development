@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/database_service.dart';
 import '../../utils/constants.dart';
@@ -38,27 +39,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
-  Future<void> _pickAndUploadProfilePhoto() async {
+  Future<void> _pickAndUploadProfilePhoto(ImageSource source) async {
     final user = _auth.currentUser;
     if (user == null || _isUploadingImage) return;
 
     try {
       final picked = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 82,
-        maxWidth: 1024,
+        maxWidth: 1400,
       );
 
       if (picked == null) return;
 
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 82,
+        aspectRatioPresets: const [
+          CropAspectRatioPreset.square,
+          CropAspectRatioPreset.ratio4x3,
+          CropAspectRatioPreset.original,
+        ],
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Profile Photo',
+            toolbarColor: Colors.red,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: Colors.red,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(
+            title: 'Crop Profile Photo',
+          ),
+        ],
+      );
+
+      if (cropped == null) return;
+
       setState(() => _isUploadingImage = true);
+      final previousUrl = _avatarUrlController.text.trim();
 
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('user_profiles/${user.uid}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
-      await storageRef.putFile(File(picked.path));
+      await storageRef.putFile(File(cropped.path));
       final downloadUrl = await storageRef.getDownloadURL();
+
+      if (previousUrl.isNotEmpty && previousUrl != downloadUrl) {
+        try {
+          await FirebaseStorage.instance.refFromURL(previousUrl).delete();
+        } catch (_) {
+          // Ignore delete failures for external URLs or already-deleted files.
+        }
+      }
 
       _avatarUrlController.text = downloadUrl;
 
@@ -82,6 +117,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _isUploadingImage = false);
       }
     }
+  }
+
+  Future<void> _showPhotoSourcePicker() async {
+    if (_isUploadingImage) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadProfilePhoto(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadProfilePhoto(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadProfile() async {
@@ -192,15 +260,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: _isUploadingImage ? null : _pickAndUploadProfilePhoto,
+                    onPressed: _isUploadingImage ? null : _showPhotoSourcePicker,
                     icon: _isUploadingImage
                         ? const SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.photo_library_outlined),
-                    label: Text(_isUploadingImage ? 'Uploading Photo...' : 'Upload From Gallery'),
+                        : const Icon(Icons.add_a_photo_outlined),
+                    label: Text(_isUploadingImage ? 'Uploading Photo...' : 'Add or Change Photo'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       backgroundColor: Colors.deepOrange,
