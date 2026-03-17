@@ -56,11 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         sourcePath: picked.path,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 82,
-        aspectRatioPresets: const [
-          CropAspectRatioPreset.square,
-          CropAspectRatioPreset.ratio4x3,
-          CropAspectRatioPreset.original,
-        ],
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Profile Photo',
@@ -68,9 +63,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             toolbarWidgetColor: Colors.white,
             activeControlsWidgetColor: Colors.red,
             lockAspectRatio: false,
+            aspectRatioPresets: const [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.original,
+            ],
           ),
           IOSUiSettings(
             title: 'Crop Profile Photo',
+            aspectRatioLockEnabled: false,
+            resetAspectRatioEnabled: true,
           ),
         ],
       );
